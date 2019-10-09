@@ -1,27 +1,26 @@
 local Tunnel = module('vrp', 'lib/Tunnel')
 local Proxy = module('vrp', 'lib/Proxy')
-local Tools = module('vrp', 'lib/Tools')
 emP = Tunnel.getInterface('emp_lc2')
 vRP = Proxy.getInterface('vRP')
 
 local happening = false
 local startingPoints = {
-	[1] = {-774.19, -254.45, 37.10},
-	[2] = {-231.64, -1170.94, 22.83},
-	[3] = {925.59, -8.79, 78.76},
-	[4] = {-506.18, -2191.37, 6.53},
-	[5] = {1209.15, 2712.03, 38.00},
-	[6] = {1181.46, -334.74, 69.17},
-	[7] = {2567.72, 362.65, 108.45}
+	[1] = {-595.40,28.95,43.44}, --
+	[2] = {-277.47,-1064.10,25.84}, --
+	[3] = {921.90,47.69,80.76}, --
+	[4] = {-42.45,-785.42,44.28}, --
+	[5] = {-72.95,146.52,81.35}, --
+	[6] = {-774.23,305.76,85.70}, --
+	[7] = {-1041.06,-768.85,19.12}, --
 }
 local endingPoints = {
-	[1] = {-774.19, -254.45, 37.10},
-	[2] = {-231.64, -1170.94, 22.83},
-	[3] = {925.59, -8.79, 78.76},
-	[4] = {-506.18, -2191.37, 6.53},
-	[5] = {1209.15, 2712.03, 38.00},
-	[6] = {1181.46, -334.74, 69.17},
-	[7] = {2567.72, 362.65, 108.45}
+	[1] = {421.51,-1561.19,29.28}, --
+	[2] = {-77.43,-1393.51,29.32}, --
+	[3] = {167.23,-1273.72,29.03}, --
+	[4] = {824.86,-1056.42,27.94}, --
+	[5] = {681.60,73.65,83.34}, --
+	[6] = {-1879.96,-307.33,49.24}, --
+	[7] = {-585.68,-754.08,29.49} --
 }
 local selectedIndex = nil
 local endingIndex = nil
@@ -32,6 +31,17 @@ local endingBlip = nil
 
 Citizen.CreateThread(
 	function()
+		for _, values in pairs(startingPoints) do
+			local blip = AddBlipForCoord(table.unpack(values))
+			SetBlipSprite(blip, 225)
+			SetBlipColour(blip, 41)
+			SetBlipScale(blip, 0.5)
+			SetBlipAsShortRange(blip, true)
+			BeginTextCommandSetBlipName('STRING')
+			AddTextComponentString('Roubo de Veiculo')
+			EndTextCommandSetBlipName(blip)
+		end
+
 		while true do
 			Citizen.Wait(1)
 
@@ -44,7 +54,7 @@ Citizen.CreateThread(
 
 					local distance = Vdist2(pedCoords, x, y, z)
 
-					if distance <= 50.0 then
+					if distance <= 100.0 then
 						DrawMarker(23, x, y, z - 0.96, 0, 0, 0, 0, 0, 0, 3.0, 3.0, 0.5, 211, 176, 72, 120, 0, 0, 0, 0)
 					end
 
@@ -59,7 +69,7 @@ Citizen.CreateThread(
 											if not emP.isHappening() then
 												empVehicle = spawnVehicle(vehicles[index].model)
 												selectedIndex = index
-												seconds = 5
+												seconds = 30
 												happening = true
 												emP.setHappening(true)
 												emP.networkVehicle(VehToNet(empVehicle))
@@ -90,7 +100,7 @@ Citizen.CreateThread(
 
 				local distance = Vdist2(pedCoords, x, y, z)
 
-				if distance <= 50.0 then
+				if distance <= 100.0 then
 					DrawMarker(23, x, y, z - 0.96, 0, 0, 0, 0, 0, 0, 3.0, 3.0, 0.5, 211, 176, 72, 120, 0, 0, 0, 0)
 				end
 

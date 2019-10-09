@@ -1,6 +1,5 @@
 local Tunnel = module('vrp', 'lib/Tunnel')
 local Proxy = module('vrp', 'lib/Proxy')
-local Tools = module('vrp', 'lib/Tools')
 vRP = Proxy.getInterface('vRP')
 vRPclient = Tunnel.getInterface('vRP')
 emP = {}
@@ -9,8 +8,8 @@ Tunnel.bindInterface('emp_lc2', emP)
 -------------------------------------------------------
 --------------------  CONFIG  -------------------------
 local lc_permission = 'admin.permissao'
-local lc_cooldown = 5 * 60 -- em segundos
-local lc_scramble = 30 * 60 -- em segundos ( a cada x segundos os lugares dos veiculos vao mudar )
+local lc_cooldown = 60 * 5 -- em segundos
+local lc_scramble = 60 * 30 -- em segundos ( a cada x segundos os lugares dos veiculos vao mudar )
 local vehicles = {
     [1] = {model = 'police', name = 'Policia1', reward = 50000},
     [2] = {model = 'police2', name = 'Policia2', reward = 1000},
@@ -33,13 +32,14 @@ function scramble()
     vehicles = {}
 
     while #vehicles ~= #old_vehicles do
+        Citizen.Wait(1)
         local rndindex = math.random(#old_vehicles)
 
         if vehicles[rndindex] == nil then
-            vehicles[rndindex] = vehicles[rndindex]
+            vehicles[rndindex] = old_vehicles[rndindex]
         end
     end
-
+    
     TriggerClientEvent('lc_client:updatevehicles', -1, vehicles)
 end
 
@@ -67,6 +67,7 @@ function emP.setHappening(value)
 end
 
 function emP.networkVehicle(netid)
+    print('server received ' .. netid)
     local owner_id = vRP.getUserId(source)
     TriggerClientEvent('lc_client:addblipforvehicle', -1, owner_id, netid)
 end
@@ -86,22 +87,17 @@ Citizen.CreateThread(
     function()
         while true do
             Citizen.Wait(1000)
+
             if seconds > 0 then
                 seconds = seconds - 1
             end
 
-            if seconds == 0 and cooldown == true then
-                cooldown = false
-                scramble()
+            if seconds <= 0 then
+                if cooldown == true then
+                    cooldown = false
+                    scramble()
+                end
             end
-        end
-    end
-)
-
-Citizen.CreateThread(
-    function()
-        while true do
-            Citizen.Wait(1000)
 
             if secondstoscramble > 0 then
                 secondstoscramble = secondstoscramble - 1
@@ -115,7 +111,6 @@ Citizen.CreateThread(
         end
     end
 )
-
 AddEventHandler(
     'vRP:playerSpawn',
     function(user_id, source, first_spawn)

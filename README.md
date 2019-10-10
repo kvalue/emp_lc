@@ -6,7 +6,7 @@
  
 ## Instalação
 * Extraia a pasta `emp_lc` dentro da sua pasta resources. 
-* adicione `start vrp_outlawalert` no seu `server.cfg`.
+* adicione `start emp_lc` no seu `server.cfg`.
 ## Configurações
 * Abra o arquivo `server.lua`. 
 * Procure por `lc_permission = 'admin.permissao'`, mude para a permissao desejada ( '' caso nao queira usar permissoes ). 

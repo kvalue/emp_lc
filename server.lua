@@ -11,13 +11,13 @@ local lc_permission = 'admin.permissao'
 local lc_cooldown = 60 * 5 -- em segundos
 local lc_scramble = 60 * 30 -- em segundos ( a cada x segundos os lugares dos veiculos vao mudar )
 local vehicles = {
-    [1] = {model = 'police', name = 'Policia1', reward = 50000},
-    [2] = {model = 'police2', name = 'Policia2', reward = 1000},
-    [3] = {model = 'police3', name = 'Policia3', reward = 22000},
-    [4] = {model = 'policeold2', name = 'Policia4', reward = 700},
-    [5] = {model = 'policeold2', name = 'Policia4', reward = 700},
-    [6] = {model = 'policeold2', name = 'Policia4', reward = 700},
-    [7] = {model = 'policeold2', name = 'Policia4', reward = 700}
+    [1] = {model = 'nmax155', name = 'Policia1', reward = 50000},
+    [2] = {model = 'nmax155', name = 'Policia2', reward = 1000},
+    [3] = {model = 'nmax155', name = 'Policia3', reward = 22000},
+    [4] = {model = 'nmax155', name = 'Policia4', reward = 700},
+    [5] = {model = 'nmax155', name = 'Policia4', reward = 700},
+    [6] = {model = 'nmax155', name = 'Policia4', reward = 700},
+    [7] = {model = 'nmax155', name = 'Policia4', reward = 700}
 }
 -------------------------------------------------------
 
@@ -44,6 +44,11 @@ function scramble()
 end
 
 function emP.hasPermission()
+
+    if lc_permission == '' then
+        return true
+    end
+
     local user_id = vRP.getUserId(source)
     return vRP.hasPermission(user_id, lc_permission)
 end

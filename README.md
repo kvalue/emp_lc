@@ -9,7 +9,7 @@
 * adicione `start vrp_outlawalert` no seu `server.cfg`.
 ## Configurações
 * Abra o arquivo `server.lua`. 
-* Procure por `lc_permission = 'admin.permissao'`, mude para a permissao desejada. 
+* Procure por `lc_permission = 'admin.permissao'`, mude para a permissao desejada ( '' caso nao queira usar permissoes ). 
 * em `lc_cooldown` você pode alterar a quantidade em segundos do cooldown entre roubos
 * em `lc_scramble` é o tempo em segundos para embaralhar quais veiculos poderão ser roubados e em quais lugares
 * em `vehicles` você pode alterar quais veiculos você quer que possam ser roubados.

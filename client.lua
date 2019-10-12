@@ -1,6 +1,6 @@
 local Tunnel = module('vrp', 'lib/Tunnel')
 local Proxy = module('vrp', 'lib/Proxy')
-emP = Tunnel.getInterface('emp_lc2')
+emP = Tunnel.getInterface('emp_lc')
 vRP = Proxy.getInterface('vRP')
 
 local happening = false
@@ -69,7 +69,7 @@ Citizen.CreateThread(
 											if not emP.isHappening() then
 												empVehicle = spawnVehicle(vehicles[index].model)
 												selectedIndex = index
-												seconds = 30
+												seconds = 180
 												happening = true
 												emP.setHappening(true)
 												emP.networkVehicle(VehToNet(empVehicle))

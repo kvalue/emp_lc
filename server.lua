@@ -3,21 +3,22 @@ local Proxy = module('vrp', 'lib/Proxy')
 vRP = Proxy.getInterface('vRP')
 vRPclient = Tunnel.getInterface('vRP')
 emP = {}
-Tunnel.bindInterface('emp_lc2', emP)
+Tunnel.bindInterface('emp_lc', emP)
 
 -------------------------------------------------------
 --------------------  CONFIG  -------------------------
-local lc_permission = 'admin.permissao'
+local lc_permissao = 'admin.permissao'
+local lc_policia = 'policia.permissao'
 local lc_cooldown = 60 * 5 -- em segundos
 local lc_scramble = 60 * 30 -- em segundos ( a cada x segundos os lugares dos veiculos vao mudar )
 local vehicles = {
-    [1] = {model = 'nmax155', name = 'Policia1', reward = 50000},
-    [2] = {model = 'nmax155', name = 'Policia2', reward = 1000},
-    [3] = {model = 'nmax155', name = 'Policia3', reward = 22000},
-    [4] = {model = 'nmax155', name = 'Policia4', reward = 700},
-    [5] = {model = 'nmax155', name = 'Policia4', reward = 700},
-    [6] = {model = 'nmax155', name = 'Policia4', reward = 700},
-    [7] = {model = 'nmax155', name = 'Policia4', reward = 700}
+    [1] = {model = 'zentorno', name = 'Zentorno', reward = 60000},
+    [2] = {model = 'italigto', name = 'Itali GTO', reward = 60000},
+    [3] = {model = 'jester', name = 'Jester', reward = 60000},
+    [4] = {model = 'carbonizzare', name = 'Carbonizzare', reward = 60000},
+    [5] = {model = 'elegy', name = 'Elegy', reward = 60000},
+    [6] = {model = 'khamelion', name = 'Khamelion', reward = 60000},
+    [7] = {model = 'locust', name = 'Locust', reward = 60000}
 }
 -------------------------------------------------------
 
@@ -31,13 +32,14 @@ function scramble()
     local old_vehicles = vehicles
     vehicles = {}
 
-    while #vehicles ~= #old_vehicles do
-        Citizen.Wait(1)
+    for i = 1, #old_vehicles do 
         local rndindex = math.random(#old_vehicles)
 
-        if vehicles[rndindex] == nil then
-            vehicles[rndindex] = old_vehicles[rndindex]
+        while vehicles[rndindex] ~= nil do
+            rndindex = math.random(#old_vehicles)
         end
+
+        vehicles[rndindex] = old_vehicles[rndindex]
     end
     
     TriggerClientEvent('lc_client:updatevehicles', -1, vehicles)
@@ -45,12 +47,14 @@ end
 
 function emP.hasPermission()
 
-    if lc_permission == '' then
-        return true
+    local user_id = vRP.getUserId(source)
+
+    if lc_policia ~= '' and vRP.hasPermission(user_id, lc_policia) then
+        TriggerClientEvent('LCNotify', source, '~r~Você é um poicial e provavelmente não deveria estar aqui.')
+        return false
     end
 
-    local user_id = vRP.getUserId(source)
-    return vRP.hasPermission(user_id, lc_permission)
+    return lc_permissao == '' or vRP.hasPermission(user_id, lc_permissao)
 end
 
 function emP.hasCooldown()
@@ -72,9 +76,14 @@ function emP.setHappening(value)
 end
 
 function emP.networkVehicle(netid)
-    print('server received ' .. netid)
     local owner_id = vRP.getUserId(source)
     TriggerClientEvent('lc_client:addblipforvehicle', -1, owner_id, netid)
+
+    if lc_policia ~= '' then
+        for t_id, t_source in pairs(vRP.getUsersByPermission(lc_policia)) do
+            TriggerClientEvent('LCNotify', t_source, '~o~ALERTA ~w~Roubo de veiculo em andamento! Acompanhe-o pelo rastreador.')
+        end
+    end
 end
 
 function emP.unNetworkVehicle()

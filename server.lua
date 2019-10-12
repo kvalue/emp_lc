@@ -50,7 +50,7 @@ function emP.hasPermission()
     local user_id = vRP.getUserId(source)
 
     if lc_policia ~= '' and vRP.hasPermission(user_id, lc_policia) then
-        TriggerClientEvent('LCNotify', source, '~r~Você é um poicial e provavelmente não deveria estar aqui.')
+        TriggerClientEvent('LCNotify', source, '~r~Você é um policial e provavelmente não deveria estar aqui.')
         return false
     end
 
@@ -80,7 +80,8 @@ function emP.networkVehicle(netid)
     TriggerClientEvent('lc_client:addblipforvehicle', -1, owner_id, netid)
 
     if lc_policia ~= '' then
-        for t_id, t_source in pairs(vRP.getUsersByPermission(lc_policia)) do
+        for _, t_id in pairs(vRP.getUsersByPermission(lc_policia)) do
+		    local t_source = vRP.getUserSource(t_id)
             TriggerClientEvent('LCNotify', t_source, '~o~ALERTA ~w~Roubo de veiculo em andamento! Acompanhe-o pelo rastreador.')
         end
     end
@@ -93,8 +94,8 @@ end
 
 function emP.collectReward(index)
     local user_id = vRP.getUserId(source)
-    vRP.giveMoney(user_id, vehicles[index].reward)
-    TriggerClientEvent('LCNotify', source, '<FONT color="#40f549">+ ~s~R$' .. vRP.format(vehicles[index].reward))
+    vRP.giveInventoryItem(user_id, 'dinheirosujo', vehicles[index].reward)
+    TriggerClientEvent('LCNotify', source, '<FONT color="#40f549">+ ~s~R$' .. vRP.format(vehicles[index].reward) .. ' em dinheiro sujo')
 end
 
 Citizen.CreateThread(

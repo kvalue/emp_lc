@@ -5,22 +5,22 @@ vRP = Proxy.getInterface('vRP')
 
 local happening = false
 local startingPoints = {
-	[1] = {-595.40,28.95,43.44}, --
-	[2] = {-277.47,-1064.10,25.84}, --
-	[3] = {921.90,47.69,80.76}, --
-	[4] = {-42.45,-785.42,44.28}, --
-	[5] = {-72.95,146.52,81.35}, --
-	[6] = {-774.23,305.76,85.70}, --
-	[7] = {-1041.06,-768.85,19.12}, --
+	[1] = {-595.40, 28.95, 43.44}, --
+	[2] = {-277.47, -1064.10, 25.84}, --
+	[3] = {921.90, 47.69, 80.76}, --
+	[4] = {-42.45, -785.42, 44.28}, --
+	[5] = {-72.95, 146.52, 81.35}, --
+	[6] = {-774.23, 305.76, 85.70}, --
+	[7] = {-1041.06, -768.85, 19.12} --
 }
 local endingPoints = {
-	[1] = {421.51,-1561.19,29.28}, --
-	[2] = {-77.43,-1393.51,29.32}, --
-	[3] = {167.23,-1273.72,29.03}, --
-	[4] = {824.86,-1056.42,27.94}, --
-	[5] = {681.60,73.65,83.34}, --
-	[6] = {-1879.96,-307.33,49.24}, --
-	[7] = {-585.68,-754.08,29.49} --
+	[1] = {421.51, -1561.19, 29.28}, --
+	[2] = {-77.43, -1393.51, 29.32}, --
+	[3] = {167.23, -1273.72, 29.03}, --
+	[4] = {824.86, -1056.42, 27.94}, --
+	[5] = {681.60, 73.65, 83.34}, --
+	[6] = {-1879.96, -307.33, 49.24}, --
+	[7] = {-585.68, -754.08, 29.49} --
 }
 local selectedIndex = nil
 local endingIndex = nil
@@ -68,11 +68,14 @@ Citizen.CreateThread(
 										if not emP.hasCooldown() then
 											if not emP.isHappening() then
 												empVehicle = spawnVehicle(vehicles[index].model)
-												selectedIndex = index
-												seconds = 180
-												happening = true
-												emP.setHappening(true)
-												emP.networkVehicle(VehToNet(empVehicle))
+
+												if empVehicle ~= nil then
+													selectedIndex = index
+													seconds = 180
+													happening = true
+													emP.setHappening(true)
+													emP.networkVehicle(VehToNet(empVehicle))
+												end
 												TriggerEvent('LCNotify', '~o~LC ~s~| Despiste a policia enquanto o rastreador é desativado.')
 											else
 												TriggerEvent('LCNotify', '~r~Aguarde o roubo em andamento terminar.')
@@ -269,7 +272,22 @@ function spawnVehicle(model)
 	if HasModelLoaded(mhash) then
 		local ped = PlayerPedId()
 		local nveh = CreateVehicle(mhash, GetEntityCoords(ped), GetEntityHeading(ped), true, false)
+		local netveh = VehToNet(nveh)
 
+		NetworkRegisterEntityAsNetworked(nveh)
+		while not NetworkGetEntityIsNetworked(nveh) do
+			NetworkRegisterEntityAsNetworked(nveh)
+			Citizen.Wait(1)
+		end
+
+		if NetworkDoesNetworkIdExist(netveh) then
+			SetEntitySomething(nveh, true)
+			if NetworkGetEntityIsNetworked(nveh) then
+				SetNetworkIdExistsOnAllMachines(netveh, true)
+			end
+		end
+
+		NetworkFadeInEntity(NetToEnt(netveh), true)
 		SetVehicleOnGroundProperly(nveh)
 		SetEntityAsMissionEntity(nveh, true, true)
 		TaskWarpPedIntoVehicle(ped, nveh, -1)

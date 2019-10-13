@@ -9,6 +9,7 @@ Tunnel.bindInterface('emp_lc', emP)
 --------------------  CONFIG  -------------------------
 local lc_permissao = 'admin.permissao'
 local lc_policia = 'policia.permissao'
+local lc_policiais = 3
 local lc_cooldown = 60 * 5 -- em segundos
 local lc_scramble = 60 * 30 -- em segundos ( a cada x segundos os lugares dos veiculos vao mudar )
 local vehicles = {
@@ -54,7 +55,17 @@ function emP.hasPermission()
         return false
     end
 
-    return lc_permissao == '' or vRP.hasPermission(user_id, lc_permissao)
+    if #vRP.getUsersByPermission(lc_policia) < lc_policiais then
+        TriggerClientEvent('LCNotify', source, '~r~Número insuficiente de policiais.')
+        return false
+    end
+
+    if lc_permissao == ''or vRP.hasPermission(user_id, lc_permissao) then
+        return true
+    end
+
+    TriggerClientEvent('LCNotify', source, '~r~Você não tem permissão.')
+    return false
 end
 
 function emP.hasCooldown()
@@ -77,7 +88,6 @@ end
 
 function emP.networkVehicle(netid)
     local owner_id = vRP.getUserId(source)
-    TriggerClientEvent('lc_client:addblipforvehicle', -1, owner_id, netid)
 
     if lc_policia ~= '' then
         for _, t_id in pairs(vRP.getUsersByPermission(lc_policia)) do
@@ -85,6 +95,8 @@ function emP.networkVehicle(netid)
             TriggerClientEvent('LCNotify', t_source, '~o~ALERTA ~w~Roubo de veiculo em andamento! Acompanhe-o pelo rastreador.')
         end
     end
+
+    TriggerClientEvent('lc_client:addblipforvehicle', -1, owner_id, netid)
 end
 
 function emP.unNetworkVehicle()

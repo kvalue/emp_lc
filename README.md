@@ -11,6 +11,7 @@
 * Abra o arquivo `server.lua`. 
 * Procure por `lc_permissao = 'admin.permissao'`, mude para a permissao desejada ( '' caso nao queira usar permissoes ). 
 * em `lc_policia` você pode alterar a permissao da policia
+* em `lc_policiais` você pode alterar o numero de policias necessarios para iniciar o roubo
 * em `lc_cooldown` você pode alterar a quantidade em segundos do cooldown entre roubos
 * em `lc_scramble` é o tempo em segundos para embaralhar quais veiculos poderão ser roubados e em quais lugares
 * em `vehicles` você pode alterar quais veiculos você quer que possam ser roubados.

@@ -73,22 +73,20 @@ Citizen.CreateThread(
 												happening = true
 												emP.setHappening(true)
 												emP.networkVehicle(VehToNet(empVehicle))
-												TriggerEvent('LCNotify', '~o~A policia foi alertada do roubo e estará seguindo-o pelo rastreador.')
+												TriggerEvent('LCNotify', '~o~LC ~s~| Despiste a policia enquanto o rastreador é desativado.')
 											else
 												TriggerEvent('LCNotify', '~r~Aguarde o roubo em andamento terminar.')
 											end
 										else
 											TriggerEvent('LCNotify', '~r~Não temos carros pra voce no momento, volte mais tarde.')
 										end
-									else
-										TriggerEvent('LCNotify', '~r~Você não tem permissão.')
 									end
 								end
 							else
-								drawHelpTxt('Você precisa estar a pé.')
+								drawHelpTxt('~s~Você precisa estar a pé.')
 							end
 						else
-							drawHelpTxt('Nenhum veiculo disponivel, volte mais tarde!')
+							drawHelpTxt('~s~Nenhum veiculo disponivel, volte mais tarde!')
 						end
 					end
 				end

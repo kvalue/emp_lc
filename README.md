@@ -17,3 +17,4 @@
 * `model` é o modelo para spawnar o veiculo.
 * `name` é o nome de display do veiculo.
 * `reward` é o tanto de dinheiro ganho ao vender o veiculo.
+* Procure por `dinheirosujo` e altere para o item que corresponda ao dinheiro sujo em sua base

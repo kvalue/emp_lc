@@ -250,9 +250,11 @@ AddEventHandler(
 			blips[owner_id] = nil
 		end
 
-		if DoesEntityExist(NetToVeh(netid)) then
-			blips[owner_id] = _addBlipForEntity(NetToVeh(netid))
+		while not DoesEntityExist(NetToVeh(netid)) do
+			Citizen.Wait(1)
 		end
+
+		blips[owner_id] = _addBlipForEntity(NetToVeh(netid))
 	end
 )
 
@@ -280,13 +282,12 @@ function spawnVehicle(model)
 		SetEntityAsMissionEntity(vehicle, true, true)
 
 		local netID = VehToNet(vehicle)
+		SetNetworkIdExistsOnAllMachines(netId, true)
 		NetworkSetNetworkIdDynamic(netID, false)
 		SetNetworkIdCanMigrate(netId, true)
-		SetNetworkIdExistsOnAllMachines(netId, true)
 
 		NetworkFadeInEntity(NetToEnt(netID), true)
 		SetVehicleOnGroundProperly(vehicle)
-		SetEntityAsMissionEntity(vehicle, true, true)
 		TaskWarpPedIntoVehicle(ped, vehicle, -1)
 
 		SetModelAsNoLongerNeeded(mhash)

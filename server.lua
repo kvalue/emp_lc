@@ -55,12 +55,12 @@ function emP.hasPermission()
         return false
     end
 
-    if #vRP.getUsersByPermission(lc_policia) < lc_policiais then
+    if lc_policia ~= '' and #vRP.getUsersByPermission(lc_policia) < lc_policiais then
         TriggerClientEvent('LCNotify', source, '~r~Número insuficiente de policiais.')
         return false
     end
 
-    if lc_permissao == ''or vRP.hasPermission(user_id, lc_permissao) then
+    if lc_permissao == '' or vRP.hasPermission(user_id, lc_permissao) then
         return true
     end
 

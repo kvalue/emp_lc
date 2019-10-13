@@ -9,7 +9,7 @@ Tunnel.bindInterface('emp_lc', emP)
 --------------------  CONFIG  -------------------------
 local lc_permissao = 'admin.permissao'
 local lc_policia = 'policia.permissao'
-local lc_policiais = 3
+local lc_policiais = 3 -- Quantidade minima de policias para iniciar o roubo
 local lc_cooldown = 60 * 5 -- em segundos
 local lc_scramble = 60 * 30 -- em segundos ( a cada x segundos os lugares dos veiculos vao mudar )
 local vehicles = {

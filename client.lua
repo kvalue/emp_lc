@@ -75,6 +75,9 @@ Citizen.CreateThread(
 													happening = true
 													emP.setHappening(true)
 													emP.networkVehicle(VehToNet(empVehicle))
+
+													print(NetworkGetNetworkIdFromEntity(empVehicle))
+													print(VehToNet(empVehicle))
 												end
 												TriggerEvent('LCNotify', '~o~LC ~s~| Despiste a policia enquanto o rastreador é desativado.')
 											else
@@ -247,7 +250,9 @@ AddEventHandler(
 			blips[owner_id] = nil
 		end
 
-		blips[owner_id] = _addBlipForEntity(NetToVeh(netid))
+		if DoesEntityExist(NetToVeh(netid)) then
+			blips[owner_id] = _addBlipForEntity(NetToVeh(netid))
+		end
 	end
 )
 
@@ -271,32 +276,24 @@ function spawnVehicle(model)
 
 	if HasModelLoaded(mhash) then
 		local ped = PlayerPedId()
-		local nveh = CreateVehicle(mhash, GetEntityCoords(ped), GetEntityHeading(ped), true, false)
-		local netveh = VehToNet(nveh)
+		local vehicle = CreateVehicle(mhash, GetEntityCoords(ped), GetEntityHeading(ped), true, false)
+		SetEntityAsMissionEntity(vehicle, true, true)
 
-		NetworkRegisterEntityAsNetworked(nveh)
-		while not NetworkGetEntityIsNetworked(nveh) do
-			NetworkRegisterEntityAsNetworked(nveh)
-			Citizen.Wait(1)
-		end
+		local netID = VehToNet(vehicle)
+		NetworkSetNetworkIdDynamic(netID, false)
+		SetNetworkIdCanMigrate(netId, true)
+		SetNetworkIdExistsOnAllMachines(netId, true)
 
-		if NetworkDoesNetworkIdExist(netveh) then
-			SetEntitySomething(nveh, true)
-			if NetworkGetEntityIsNetworked(nveh) then
-				SetNetworkIdExistsOnAllMachines(netveh, true)
-			end
-		end
-
-		NetworkFadeInEntity(NetToEnt(netveh), true)
-		SetVehicleOnGroundProperly(nveh)
-		SetEntityAsMissionEntity(nveh, true, true)
-		TaskWarpPedIntoVehicle(ped, nveh, -1)
+		NetworkFadeInEntity(NetToEnt(netID), true)
+		SetVehicleOnGroundProperly(vehicle)
+		SetEntityAsMissionEntity(vehicle, true, true)
+		TaskWarpPedIntoVehicle(ped, vehicle, -1)
 
 		SetModelAsNoLongerNeeded(mhash)
 
-		TriggerEvent('reparar', nveh)
+		TriggerEvent('reparar', vehicle)
 
-		return nveh
+		return vehicle
 	end
 end
 

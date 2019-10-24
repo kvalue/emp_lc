@@ -1,21 +1,19 @@
-# emp_lc | key_value#2732
+# kv_lc | key_value#2732
 ## Roubo de veiculos, com rastreador etc.
- O codigo foi feito em +/- 2 horas então provavelmente deve rolar alguns bugs, caso tenha, só criar um issue que eu dou uma olhada. Caso tenha alguma sugestão de alteração ou melhoria do script, sinta-se livre pra me contatar no discord
+ Script totalmente refeito. Deve haver menos bug e possiveis exploits por conta da maioria das coisas serem verificadas pelo servidor. Qualquer duvida ou sugestão, crie um issue ou me mande mensagem no discord `key_value#2732`
 
- 
- 
+  
 ## Instalação
 * Extraia a pasta `emp_lc` dentro da sua pasta resources. 
 * adicione `start emp_lc` no seu `server.cfg`.
 ## Configurações
 * Abra o arquivo `server.lua`. 
-* Procure por `lc_permissao = 'admin.permissao'`, mude para a permissao desejada ( '' caso nao queira usar permissoes ). 
-* em `lc_policia` você pode alterar a permissao da policia
-* em `lc_policiais` você pode alterar o numero de policias necessarios para iniciar o roubo
-* em `lc_cooldown` você pode alterar a quantidade em segundos do cooldown entre roubos
-* em `lc_scramble` é o tempo em segundos para embaralhar quais veiculos poderão ser roubados e em quais lugares
-* em `vehicles` você pode alterar quais veiculos você quer que possam ser roubados.
-* `model` é o modelo para spawnar o veiculo.
-* `name` é o nome de display do veiculo.
-* `reward` é o tanto de dinheiro ganho ao vender o veiculo.
-* Procure por `dinheirosujo` e altere para o item que corresponda ao dinheiro sujo em sua base
+* Procure por `-- CONFIG``
+* `cPermission` para alterar a permissão. 
+* `cCopPermission` para alterar a permissão da policia.
+* `cCops` para alterar o número mínimo de policiais.
+* `cGlobalRadar` para mostrar ou não o rastreador à todos.
+* `cSeconds` para alterar o tempo do rastreador.
+* `cCooldownSeconds` para alterar o tempo de cooldown após o termino.
+8 `cRandomizeSeconds` para alterar o tempo em que são alterados os veículos.
+* `cVehicles` para alterar os veículos. Formato: `[id] = {'modelo', 'nome', recompensa}`

@@ -1,43 +1,59 @@
 local Tunnel = module('vrp', 'lib/Tunnel')
 local Proxy = module('vrp', 'lib/Proxy')
 
+vRP = Proxy.getInterface('vRP')
+lcSERVER = Tunnel.getInterface('emp_lc')
+
 lcCLIENT = {}
 Tunnel.bindInterface('emp_lc', lcCLIENT)
-vRP = Tunnel.getInterface('vRP')
-lcSERVER = Tunnel.getInterface('emp_lc')
 Proxy.addInterface('emp_lc', lcCLIENT)
 
-local startingPoints = {
-	[1] = {-595.40, 28.95, 43.44}, --
-	[2] = {-277.47, -1064.10, 25.84}, --
-	[3] = {921.90, 47.69, 80.76}, --
-	[4] = {-42.45, -785.42, 44.28}, --
-	[5] = {-72.95, 146.52, 81.35}, --
-	[6] = {-774.23, 305.76, 85.70}, --
-	[7] = {-1041.06, -768.85, 19.12} --
+-- USER ONLY
+local varSeconds = 0
+local varVehicle
+local varSelectedIndex
+local varDBlip
+local varDelivering = false
+
+local pLocations = {
+	-- Pickup
+	[1] = {-595.40, 28.95, 43.44},
+	[2] = {-277.47, -1064.10, 25.84},
+	[3] = {921.90, 47.69, 80.76},
+	[4] = {-42.45, -785.42, 44.28},
+	[5] = {-72.95, 146.52, 81.35},
+	[6] = {-774.23, 305.76, 85.70},
+	[7] = {-1041.06, -768.85, 19.12}
 }
 
-local endingPoints = {
-	[1] = {421.51, -1561.19, 29.28}, --
-	[2] = {-77.43, -1393.51, 29.32}, --
-	[3] = {167.23, -1273.72, 29.03}, --
-	[4] = {824.86, -1056.42, 27.94}, --
-	[5] = {681.60, 73.65, 83.34}, --
-	[6] = {-1879.96, -307.33, 49.24}, --
-	[7] = {-585.68, -754.08, 29.49} --
+local dLocations = {
+	-- Delivery
+	--[[
+	[1] = {421.51, -1561.19, 29.28},
+	[2] = {-77.43, -1393.51, 29.32},
+	[3] = {167.23, -1273.72, 29.03},
+	[4] = {824.86, -1056.42, 27.94},
+	[5] = {681.60, 73.65, 83.34},
+	[6] = {-1879.96, -307.33, 49.24},
+	[7] = {-585.68, -754.08, 29.49},
+	]]
+	[1] = {-595.40, 28.95, 43.44},
+	[2] = {-277.47, -1064.10, 25.84},
+	[3] = {921.90, 47.69, 80.76},
+	[4] = {-42.45, -785.42, 44.28},
+	[5] = {-72.95, 146.52, 81.35},
+	[6] = {-774.23, 305.76, 85.70},
+	[7] = {-1041.06, -768.85, 19.12}
 }
 
-local happening = false
-local selectedIndex = nil
-local endingIndex = nil
-local vehicles = {}
-local seconds = 0
-local empVehicle = nil
-local endingBlip = nil
+-- GLOBAL
+local gVehicles = {} -- [i] = {model, name, price}
+--local gBlip
+local gGlobalVehicleID
 
 Citizen.CreateThread(
 	function()
-		for _, values in pairs(startingPoints) do
+		for _, values in pairs(pLocations) do
 			local blip = AddBlipForCoord(table.unpack(values))
 			SetBlipSprite(blip, 225)
 			SetBlipColour(blip, 41)
@@ -48,232 +64,156 @@ Citizen.CreateThread(
 			EndTextCommandSetBlipName(blip)
 		end
 
+		local dx, dy, dz
 		while true do
 			Citizen.Wait(1)
 
+			if #gVehicles <= 0 then
+				lcCLIENT.SetVehicles(lcSERVER.GetVehicles())
+			end
+
 			local ped = PlayerPedId()
+			local px, py, pz = table.unpack(GetEntityCoords(ped))
 
-			if happening == false then
-				local pedCoords = GetEntityCoords(ped)
-				for index, values in pairs(startingPoints) do
-					local x, y, z = table.unpack(values)
+			if varSelectedIndex == nil and varVehicle == nil and #gVehicles > 0 then
+				for index, coords in pairs(pLocations) do
+					local x, y, z = table.unpack(coords)
+					local distance = Vdist2(px, py, pz, x, y, z)
 
-					local distance = Vdist2(pedCoords, x, y, z)
-
-					if distance <= 100.0 then
-						DrawMarker(23, x, y, z - 0.96, 0, 0, 0, 0, 0, 0, 3.0, 3.0, 0.5, 211, 176, 72, 120, 0, 0, 0, 0)
+					if distance <= 70.0 then
+						DrawMarker(23, x, y, z - 0.96, 0, 0, 0, 0, 0, 0, 3.0, 3.0, 0.5, 211, 176, 120, 120, 0, 0, 0, 0)
 					end
 
-					if distance <= 3.0 then
-						if vehicles[index] then
-							if not IsPedInAnyVehicle(ped, true) then
-								drawHelpTxt('Pressione ~INPUT_PICKUP~ parar roubar um <FONT color="#8de090">' .. vehicles[index].name .. '~s~.')
-
-								if IsControlJustPressed(0, 38) then -- Press E BUTTON
-									if lcSERVER.HasPermission() then
-										if not lcSERVER.HasCooldown() then
-											if not lcSERVER.IsHappening() then
-												empVehicle = spawnVehicle(vehicles[index].model)
-												if empVehicle ~= nil then
-													selectedIndex = index
-													seconds = 180
-													happening = true
-													lcSERVER.SetHappening(true)
-													lcSERVER.RegisterNetworkedVehicle(VehToNet(empVehicle))
-												end
-												lcCLIENT.Notify('~o~LC ~s~| Despiste a policia enquanto o rastreador é desativado.')
-											else
-												lcCLIENT.Notify('~r~Aguarde o roubo em andamento terminar.')
-											end
-										else
-											lcCLIENT.Notify('~r~Não temos carros pra voce no momento, volte mais tarde.')
-										end
-									end
+					if distance <= 2.5 then
+						drawHelpTxt('~INPUT_PICKUP~~n~Veículo disponível: ~o~' .. gVehicles[index][2] .. '~n~~s~Recompensa:~g~ R$' .. format(gVehicles[index][3]) .. ' sujo')
+						if IsControlJustPressed(0, 38) then
+							if lcSERVER.HasPermission() then
+								varSelectedIndex = index
+								newVehicle()
+								local netID = VehToNet(varVehicle)
+								if lcSERVER.Start(index, netID) then
+									newSecondsCountdown()
 								end
+							end
+						end
+					end
+				end
+			end
+
+			-- Setup new delivery location
+			if varVehicle ~= nil and gGlobalVehicleID == nil and varSeconds <= 0 and not varDelivering then
+				varDelivering = true
+				varSeconds = 0
+
+				--[[
+				varSelectedIndex = math.random(#dLocations)
+
+				while dLocations[varSelectedIndex] == nil do
+					Citizen.Wait(10)
+					varSelectedIndex = math.random(#dLocations)
+				end
+				]]
+				if lcSERVER.StartDelivery(varSelectedIndex) then
+					dx, dy, dz = table.unpack(dLocations[varSelectedIndex])
+					newDeliveryBlip()
+				end
+			end
+
+			-- Check if player is in the delivery location
+			if varDelivering and varVehicle ~= nil then
+				local distance = Vdist2(px, py, pz, dx, dy, dz)
+
+				if distance <= 70.0 then
+					DrawMarker(23, dx, dy, dz - 0.96, 0, 0, 0, 0, 0, 0, 3.0, 3.0, 0.5, 211, 176, 120, 120, 0, 0, 0, 0)
+				end
+
+				if distance <= 2.5 then
+					drawHelpTxt('~INPUT_PICKUP~~n~Receber Recompensa:~g~ R$' .. format(gVehicles[varSelectedIndex][3]) .. ' sujo')
+					if IsControlJustPressed(0, 38) then
+						if GetVehiclePedIsIn(ped, false) == varVehicle then
+							if lcSERVER.GetPayment() then
+								lcSERVER.End()
+
+								DeleteVehicle(varVehicle)
+								varSeconds = 0
+								varVehicle = nil
+								varSelectedIndex = nil
+								if varDBlip ~= nil then
+									RemoveBlip(varDBlip)
+									varDBlip = nil
+								end
+								varDelivering = false
 							else
-								drawHelpTxt('~s~Você precisa estar a pé.')
+								lcCLIENT.Notification('x')
 							end
 						else
-							drawHelpTxt('~s~Nenhum veiculo disponivel, volte mais tarde!')
+							lcCLIENT.Notification('Este não é o veiculo que eu pedi')
 						end
 					end
 				end
 			end
 
-			if happening == true and seconds <= 0 and endingIndex ~= nil then
-				local pedCoords = GetEntityCoords(ped)
-				local x, y, z = table.unpack(endingPoints[endingIndex])
+			if varVehicle ~= nil then
+				if not DoesEntityExist(varVehicle) or DoesEntityExist(varVehicle) and GetEntityHealth(varVehicle) <= 90 then
+					lcCLIENT.Notification('~o~O veículo desapareceu ou está danificado.')
+					lcSERVER.End()
+					lcSERVER.ClearGlobalVehicleNetID()
 
-				local distance = Vdist2(pedCoords, x, y, z)
-
-				if distance <= 100.0 then
-					DrawMarker(23, x, y, z - 0.96, 0, 0, 0, 0, 0, 0, 3.0, 3.0, 0.5, 211, 176, 72, 120, 0, 0, 0, 0)
-				end
-
-				if distance <= 3.0 then
-					-- Draw help text
-					-- Draw text
-					if IsPedInAnyVehicle(ped, true) then
-						if IsPedInVehicle(ped, empVehicle, true) then
-							drawHelpTxt('Pressione ~INPUT_PICKUP~ para vender o <FONT color="#8de090">' .. vehicles[selectedIndex].name .. '~s~ por R$' .. format(vehicles[selectedIndex].reward) .. '~s~.')
-
-							if IsControlJustPressed(0, 38) then -- Press E BUTTON
-								lcSERVER.CollectReward(selectedIndex)
-								DeleteVehicle(empVehicle)
-								empVehicle = nil
-								seconds = 0
-								happening = false
-								endingIndex = nil
-								selectedIndex = nil
-								RemoveBlip(endingBlip)
-								endingBlip = nil
-								lcSERVER.SetHappening(false)
-								lcSERVER.UnregisterNetworkedVehicle()
-							end
-						else
-							drawHelpTxt('Que carro é esse?')
-						end
-					else
-						drawHelpTxt('Cade o carro que eu pedi?')
+					varSeconds = 0
+					varVehicle = nil
+					varSelectedIndex = nil
+					if varDBlip ~= nil then
+						RemoveBlip(varDBlip)
+						varDBlip = nil
 					end
+					varDelivering = false
 				end
 			end
 
-			if happening == true then
-				if not DoesEntityExist(empVehicle) then
-					DeleteVehicle(empVehicle)
-					empVehicle = nil
-					seconds = 0
-					happening = false
-					endingIndex = nil
-					selectedIndex = nil
-					RemoveBlip(endingBlip)
-					endingBlip = nil
-					lcSERVER.SetHappening(false)
-					lcSERVER.UnregisterNetworkedVehicle()
-				else
-					if seconds > 0 then
-						drawTxt('Rastreador: <FONT color="#8de090">' .. math.floor(seconds / 60) .. ' minutos e ' .. math.floor(seconds % 60) .. ' segundos ~s~restantes', 6, 0.16, 0.87, 0.5, 255, 255, 255, 255)
-					end
+			if varVehicle ~= nil then
+				if varSeconds > 0 and not varDelivering then
+					drawTxt('Rastreador: <FONT color="#8de090">' .. math.floor(varSeconds / 60) .. ' minutos e ' .. math.floor(varSeconds % 60) .. ' segundos ~s~restantes', 6, 0.16, 0.87, 0.5, 255, 255, 255, 255)
+				end
 
-					if seconds <= 0 then
-						drawTxt('Rastreador: <FONT color="#e08d8d">desativado', 6, 0.16, 0.87, 0.5, 255, 255, 255, 255)
-						drawTxt('Vá até o local marcado no mapa e venda o veiculo.', 6, 0.16, 0.890, 0.45, 255, 255, 255, 120)
-					end
-
-					if seconds <= 0 and endingIndex == nil then
-						endingIndex = math.random(#endingPoints)
-						endingBlip = addEndingBlip(table.unpack(endingPoints[endingIndex]))
-						lcSERVER.UnregisterNetworkedVehicle()
-					end
-
-					if empVehicle ~= nil and GetVehicleDoorLockStatus(empVehicle) ~= 1 then
-						SetVehicleDoorsLocked(empVehicle, false)
-					end
+				if varSeconds <= 0 and varDelivering then
+					drawTxt('Rastreador: <FONT color="#e08d8d">desativado', 6, 0.16, 0.87, 0.5, 255, 255, 255, 255)
+					drawTxt('Vá até o local marcado no mapa e venda o veiculo.', 6, 0.16, 0.890, 0.45, 255, 255, 255, 120)
 				end
 			end
 		end
 	end
 )
 
-Citizen.CreateThread(
-	function()
-		while true do
-			Citizen.Wait(1000)
-			if seconds > 0 then
-				seconds = seconds - 1
-			end
-		end
-	end
-)
-
-local blips = {}
-
-function lcCLIENT.SyncVehicles(value)
-	vehicles = value
+function lcCLIENT.SetVehicles(value)
+	gVehicles = value
 end
 
-function lcCLIENT.GetNetworkID()
-	return empVehicle
+function lcCLIENT.ClearGlobalVehicleNetID()
+	RemoveBlip(GetBlipFromEntity(NetToEnt(gVehicleNetID)))
+	--gBlip = nil
+	gVehicleNetID = nil
 end
 
-function lcCLIENT.AddBlipForNetworkID(user_id, netid)
-	if blips[user_id] then
-		RemoveBlip(blips[user_id])
-		blips[user_id] = nil
+function lcCLIENT.SetGlobalVehicleNetID(value)
+	-- if gBlip then
+	-- 	RemoveBlip(gBlip)
+	-- end
+
+	if gVehicleNetID ~= nil then
+		RemoveBlip(GetBlipFromEntity(NetToEnt(gVehicleNetID)))
 	end
 
-	local entity = NetToEnt(netid)
-	while not DoesEntityExist(entity) do
-		Citizen.Wait(1)
+	if value ~= nil then
+		gVehicleNetID = value
+
+		newRadarBlip()
 	end
-
-	blips[user_id] = _addBlipForEntity(entity)
-
-	--[[
-	Citizen.CreateThread(
-		function()
-			while blips[user_id] ~= nil do
-				Citizen.Wait(1)
-
-				if not DoesEntityExist(entity) then
-					local newid = lcSERVER.GetNetworkID(user_id)
-					entity = NetToVeh(lcSERVER.GetNetworkID(user_id))
-					blips[user_id] = _addBlipForEntity(entity)
-					print(newid)
-				end
-			end
-		end
-	)
-	]]
 end
 
-function lcCLIENT.RemoveBlipFrom(user_id)
-	if not blips[user_id] then
-		return
-	end
-
-	RemoveBlip(blips[user_id])
-	blips[user_id] = nil
-end
-
-function lcCLIENT.Notify(text)
-	AddTextEntry('MESSAGE_LCNOTIFY', text)
+function lcCLIENT.Notification(text)
+	AddTextEntry('MESSAGE_LCNOTIFY', '<FONT color="#8de090">LC</FONT> | ' .. text)
 	SetNotificationTextEntry('MESSAGE_LCNOTIFY')
 	DrawNotification(true, false)
-end
-
-function spawnVehicle(model)
-	local mhash = GetHashKey(model)
-	RequestModel(mhash)
-	while not HasModelLoaded(mhash) do
-		Citizen.Wait(10)
-	end
-
-	if HasModelLoaded(mhash) then
-		local ped = PlayerPedId()
-		local vehicle = CreateVehicle(mhash, GetEntityCoords(ped), GetEntityHeading(ped), true, false)
-		--SetEntityAsMissionEntity(vehicle, true, true)
-		SetVehicleHasBeenOwnedByPlayer(vehicle, true)
-
-		local netID = VehToNet(vehicle)
-		SetNetworkIdExistsOnAllMachines(netId, true)
-		NetworkSetNetworkIdDynamic(netID, false)
-		SetNetworkIdCanMigrate(netId, true)
-
-		NetworkFadeInEntity(NetToEnt(netID), true)
-		SetVehicleOnGroundProperly(vehicle)
-		TaskWarpPedIntoVehicle(ped, vehicle, -1)
-
-		SetVehicleFixed(vehicle)
-		SetVehicleDirtLevel(vehicle, 0.0)
-
-		SetModelAsNoLongerNeeded(mhash)
-
-		TriggerEvent('reparar', vehicle)
-
-		return vehicle
-	end
 end
 
 function drawTxt(text, font, x, y, scale, r, g, b, a)
@@ -292,8 +232,90 @@ function drawHelpTxt(text)
 	DisplayHelpTextFromStringLabel(0, 0, 1, -1)
 end
 
-function _addBlipForEntity(entity)
-	local blip = AddBlipForEntity(entity)
+function newSecondsCountdown()
+	varSeconds = lcSERVER.GetSeconds()
+	Citizen.CreateThread(
+		function()
+			while varSeconds > 0 do
+				Citizen.Wait(1000)
+				varSeconds = lcSERVER.GetSeconds()
+			end
+		end
+	)
+end
+
+function newVehicle()
+	if varSelectedIndex == nil or gVehicles[varSelectedIndex] == nil then
+		return nil
+	end
+
+	local model = gVehicles[varSelectedIndex][1]
+
+	local modelhash = GetHashKey(model)
+	RequestModel(modelhash)
+	while not HasModelLoaded(modelhash) do
+		Citizen.Wait(1)
+	end
+
+	if HasModelLoaded(modelhash) then
+		local ped = PlayerPedId()
+		varVehicle = CreateVehicle(modelhash, GetEntityCoords(ped), GetEntityHeading(ped), true, false)
+		SetVehicleHasBeenOwnedByPlayer(varVehicle, true)
+		NetworkRegisterEntityAsNetworked(varVehicle)
+
+		SetVehicleOnGroundProperly(varVehicle)
+		TaskWarpPedIntoVehicle(ped, varVehicle, -1)
+		SetVehicleFixed(varVehicle)
+		SetVehicleDirtLevel(varVehicle, 0.0)
+
+		SetModelAsNoLongerNeeded(modelhash)
+
+		TriggerEvent('reparar', varVehicle)
+
+		netID = VehToNet(varVehicle)
+		local entity = NetToEnt(netID)
+
+		NetworkFadeInEntity(entity, true)
+
+		SetNetworkIdExistsOnAllMachines(netID, true)
+
+		Citizen.Wait(250)
+
+		varVehicle = NetToVeh(netID)
+	-- local attempts = 0
+	-- while not NetworkDoesEntityExistWithNetworkId(gGlobalVehicleID) and attempts < 10 do
+	-- 	Citizen.Wait(50)
+	-- 	gGlobalVehicleID = VehToNet(varVehicle)
+	-- 	NetworkRegisterEntityAsNetworked(entity)
+	-- 	SetEntityAsMissionEntity(entity)
+
+	-- 	SetNetworkIdCanMigrate(gGlobalVehicleID, true)
+	-- 	SetNetworkIdExistsOnAllMachines(gGlobalVehicleID, true)
+
+	-- 	NetworkRequestControlOfEntity(entity)
+	-- 	attempts = attempts + 1
+	-- end
+	-- if attempts >= 10 then
+	-- 	Citizen.Trace('Failed to register entity on net')
+	-- 	return nil
+	-- else
+	-- 	Citizen.Trace('Registered UselessCar on net as NetID: ' .. gGlobalVehicleID)
+	-- end
+	end
+end
+
+function newRadarBlip()
+	if gVehicleNetID == nil then
+		return
+	end
+
+	local vehicle = NetToVeh(gVehicleNetID)
+
+	if not DoesEntityExist(vehicle) then
+		return
+	end
+
+	local blip = AddBlipForEntity(vehicle)
 	SetBlipSprite(blip, 161)
 	SetBlipColour(blip, 6)
 	SetBlipScale(blip, 1.4)
@@ -301,20 +323,41 @@ function _addBlipForEntity(entity)
 	BeginTextCommandSetBlipName('STRING')
 	AddTextComponentString(' Rastreador')
 	EndTextCommandSetBlipName(blip)
-	return blip
+
+	Citizen.CreateThread(
+		function()
+			while gVehicleNetID ~= nil do
+				Citizen.Wait(100)
+
+				if DoesEntityExist(vehicle) then
+					if GetBlipFromEntity(vehicle) == 0 then
+						newRadarBlip()
+						break
+					end
+				else
+					vehicle = NetToVeh(gVehicleNetID)
+				end
+			end
+		end
+	)
 end
 
-function addEndingBlip(x, y, z)
-	local blip = AddBlipForCoord(x, y, z)
-	SetBlipSprite(blip, 1)
-	SetBlipColour(blip, 5)
-	SetBlipScale(blip, 0.4)
-	SetBlipAsShortRange(blip, true)
-	SetBlipRoute(blip, true)
+function newDeliveryBlip()
+	if varSelectedIndex == nil or dLocations[varSelectedIndex] == nil then
+		return
+	end
+
+	local x, y, z = table.unpack(dLocations[varSelectedIndex])
+
+	varDBlip = AddBlipForCoord(x, y, z)
+	SetBlipSprite(varDBlip, 1)
+	SetBlipColour(varDBlip, 5)
+	SetBlipScale(varDBlip, 0.4)
+	SetBlipAsShortRange(varDBlip, true)
+	SetBlipRoute(varDBlip, true)
 	BeginTextCommandSetBlipName('STRING')
-	AddTextComponentString('Entrega')
-	EndTextCommandSetBlipName(blip)
-	return blip
+	AddTextComponentString(' Entrega de Veiculo')
+	EndTextCommandSetBlipName(varDBlip)
 end
 
 function format(n)

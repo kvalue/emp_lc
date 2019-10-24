@@ -8,7 +8,7 @@
 * Adicione `start emp_lc` no seu `server.cfg`.
 # Configurações
 * Abra o arquivo `server.lua`. 
-* Procure por `-- CONFIG`
+* Procure por: `-- CONFIG`
   * `cPermission` para alterar a permissão. 
   * `cCopPermission` para alterar a permissão da policia.
   * `cCops` para alterar o número mínimo de policiais.

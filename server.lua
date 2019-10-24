@@ -91,7 +91,7 @@ function lcSERVER.HasPermission()
         return false
     end
 
-    if not vRP.hasPermission(user_id, cPermission) then
+    if cPermission ~= '' and not vRP.hasPermission(user_id, cPermission) then
         lcCLIENT.Notification(source, '~r~Voce não tem permissão para fazer isso.')
         return false
     end

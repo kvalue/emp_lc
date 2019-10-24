@@ -15,5 +15,5 @@
 * `cGlobalRadar` para mostrar ou não o rastreador à todos.
 * `cSeconds` para alterar o tempo do rastreador.
 * `cCooldownSeconds` para alterar o tempo de cooldown após o termino.
-8 `cRandomizeSeconds` para alterar o tempo em que são alterados os veículos.
+* `cRandomizeSeconds` para alterar o tempo em que são alterados os veículos.
 * `cVehicles` para alterar os veículos. Formato: `[id] = {'modelo', 'nome', recompensa}`

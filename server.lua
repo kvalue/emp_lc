@@ -9,7 +9,7 @@ Tunnel.bindInterface('emp_lc', lcSERVER)
 lcCLIENT = Tunnel.getInterface('emp_lc')
 
 -- CONFIG
-local cPermission = 'admin.permissao' -- Permissao para roubar / Permission to start
+local cPermission = '' -- Permissao para roubar / Permission to start
 local cCopPermission = 'policia.permissao' -- Permissao dos policias / Cop's permission
 local cCops = 0 -- Quantidade de policias para iniciar o roubo / Minimum quantity of cops to start
 local cGlobalRadar = true -- Mostrar o rastreador para todos do servidor / Show vehicle's tracker to every player
@@ -91,7 +91,7 @@ function lcSERVER.HasPermission()
         return false
     end
 
-     if not vRP.hasPermission(user_id, cPermission) then
+    if cPermission ~= '' and not vRP.hasPermission(user_id, cPermission) then
         lcCLIENT.Notification(source, '~r~Voce não tem permissão para fazer isso.')
         return false
     end
@@ -123,7 +123,6 @@ function lcSERVER.Start(index, netid)
 end
 
 function lcSERVER.StartDelivery(index)
-
     if varUserID ~= vRP.getUserId(source) then
         return false
     end
@@ -186,7 +185,6 @@ function newSecondsCountdown()
     Citizen.CreateThread(
         function()
             varSeconds = cSeconds
-            local source = vRP.getUserSource(varUserID)
             while true do
                 Citizen.Wait(1000)
                 varSeconds = varSeconds - 1

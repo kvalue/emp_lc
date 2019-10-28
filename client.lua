@@ -34,7 +34,7 @@ local dLocations = {
 	[4] = {824.86, -1056.42, 27.94},
 	[5] = {681.60, 73.65, 83.34},
 	[6] = {-1879.96, -307.33, 49.24},
-	[7] = {-585.68, -754.08, 29.49},
+	[7] = {-585.68, -754.08, 29.49}
 }
 
 -- GLOBAL
@@ -102,7 +102,7 @@ Citizen.CreateThread(
 					Citizen.Wait(1)
 					varSelectedIndex = math.random(#dLocations)
 				end
-				
+
 				if lcSERVER.StartDelivery(varSelectedIndex) then
 					dx, dy, dz = table.unpack(dLocations[varSelectedIndex])
 					newDeliveryBlip()
@@ -269,28 +269,31 @@ function newVehicle()
 
 		SetNetworkIdExistsOnAllMachines(netID, true)
 
-		Citizen.Wait(250)
+		while not DoesEntityExist(varVehicle) do
+			Citizen.Wait(1)
+		end
+
+		local attempts = 0
+		while not NetworkDoesEntityExistWithNetworkId(netID) and attempts < 10 do
+			Citizen.Wait(50)
+			netID = VehToNet(varVehicle)
+			NetworkRegisterEntityAsNetworked(entity)
+			SetEntityAsMissionEntity(entity)
+
+			SetNetworkIdCanMigrate(netID, true)
+			SetNetworkIdExistsOnAllMachines(netID, true)
+
+			NetworkRequestControlOfEntity(entity)
+			attempts = attempts + 1
+		end
+		if attempts >= 10 then
+			Citizen.Trace('LC Falha ao registar o veiculo como networked')
+			return nil
+		else
+			Citizen.Trace('LC Registrado veiculo com netID ' .. netID)
+		end
 
 		varVehicle = NetToVeh(netID)
-	-- local attempts = 0
-	-- while not NetworkDoesEntityExistWithNetworkId(gGlobalVehicleID) and attempts < 10 do
-	-- 	Citizen.Wait(50)
-	-- 	gGlobalVehicleID = VehToNet(varVehicle)
-	-- 	NetworkRegisterEntityAsNetworked(entity)
-	-- 	SetEntityAsMissionEntity(entity)
-
-	-- 	SetNetworkIdCanMigrate(gGlobalVehicleID, true)
-	-- 	SetNetworkIdExistsOnAllMachines(gGlobalVehicleID, true)
-
-	-- 	NetworkRequestControlOfEntity(entity)
-	-- 	attempts = attempts + 1
-	-- end
-	-- if attempts >= 10 then
-	-- 	Citizen.Trace('Failed to register entity on net')
-	-- 	return nil
-	-- else
-	-- 	Citizen.Trace('Registered UselessCar on net as NetID: ' .. gGlobalVehicleID)
-	-- end
 	end
 end
 

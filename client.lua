@@ -237,7 +237,7 @@ function newSecondsCountdown()
 		function()
 			while varVehicle ~= nil do
 				Citizen.Wait(1000)
-				varSeconds = lcSERVER.GetSeconds)
+				varSeconds = lcSERVER.GetSeconds()
 			end
 		end
 	)

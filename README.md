@@ -9,7 +9,7 @@
 # Configurações
 * Abra o arquivo `server.lua`. 
 * Procure por: `-- CONFIG`
-  * `cPermission` para alterar a permissão. 
+  * `cPermission` para alterar a permissão ('' = sem permissão). 
   * `cCopPermission` para alterar a permissão da policia.
   * `cCops` para alterar o número mínimo de policiais.
   * `cGlobalRadar` para mostrar ou não o rastreador à todos.

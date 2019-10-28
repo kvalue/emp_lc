@@ -28,6 +28,7 @@ local pLocations = {
 
 local dLocations = {
 	-- Delivery
+	--[[
 	[1] = {421.51, -1561.19, 29.28},
 	[2] = {-77.43, -1393.51, 29.32},
 	[3] = {167.23, -1273.72, 29.03},
@@ -35,6 +36,14 @@ local dLocations = {
 	[5] = {681.60, 73.65, 83.34},
 	[6] = {-1879.96, -307.33, 49.24},
 	[7] = {-585.68, -754.08, 29.49},
+	]]
+	[1] = {-595.40, 28.95, 43.44},
+	[2] = {-277.47, -1064.10, 25.84},
+	[3] = {921.90, 47.69, 80.76},
+	[4] = {-42.45, -785.42, 44.28},
+	[5] = {-72.95, 146.52, 81.35},
+	[6] = {-774.23, 305.76, 85.70},
+	[7] = {-1041.06, -768.85, 19.12}
 }
 
 -- GLOBAL
@@ -69,7 +78,7 @@ Citizen.CreateThread(
 			if varSelectedIndex == nil and varVehicle == nil and #gVehicles > 0 then
 				for index, coords in pairs(pLocations) do
 					local x, y, z = table.unpack(coords)
-					local distance = Vdist2(px, py, pz, x, y, z)
+					local distance = #(vec3(x, y, z) - GetEntityCoords(ped))
 
 					if distance <= 70.0 then
 						DrawMarker(23, x, y, z - 0.96, 0, 0, 0, 0, 0, 0, 3.0, 3.0, 0.5, 211, 176, 120, 120, 0, 0, 0, 0)
@@ -99,10 +108,10 @@ Citizen.CreateThread(
 				varSelectedIndex = math.random(#dLocations)
 
 				while dLocations[varSelectedIndex] == nil do
-					Citizen.Wait(10)
+					Citizen.Wait(1)
 					varSelectedIndex = math.random(#dLocations)
 				end
-
+				
 				if lcSERVER.StartDelivery(varSelectedIndex) then
 					dx, dy, dz = table.unpack(dLocations[varSelectedIndex])
 					newDeliveryBlip()
@@ -111,7 +120,7 @@ Citizen.CreateThread(
 
 			-- Check if player is in the delivery location
 			if varDelivering and varVehicle ~= nil then
-				local distance = Vdist2(px, py, pz, dx, dy, dz)
+				local distance = #(vec3(dx, dy, dz) - GetEntityCoords(ped))
 
 				if distance <= 70.0 then
 					DrawMarker(23, dx, dy, dz - 0.96, 0, 0, 0, 0, 0, 0, 3.0, 3.0, 0.5, 211, 176, 120, 120, 0, 0, 0, 0)
@@ -226,9 +235,9 @@ function newSecondsCountdown()
 	varSeconds = lcSERVER.GetSeconds()
 	Citizen.CreateThread(
 		function()
-			while varSeconds > 0 do
+			while varVehicle ~= nil do
 				Citizen.Wait(1000)
-				varSeconds = lcSERVER.GetSeconds()
+				varSeconds = lcSERVER.GetSeconds)
 			end
 		end
 	)
